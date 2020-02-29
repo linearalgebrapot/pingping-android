@@ -1,18 +1,172 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    android:orientation="vertical"
+
+    android:background="#dfe6e9"
+    android:padding="30dp">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="2">
+
+        <TextView
+            android:id="@+id/pingping"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+
+            android:text="Ping Ping!"
+            android:textSize="50dp"
+            android:textStyle="bold"
+            android:textColor="#0984e3"
+
+            android:gravity="center"
+            android:layout_marginTop="20dp" />
+
+        <TextView
+            android:id="@+id/description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+
+            android:text="* WiFi 연결을 확인하고 IP를 입력하세요 핑핑!"
+            android:textColor="#636e72"
+
+            android:gravity="center"
+            android:layout_marginTop="20dp"
+
+            android:layout_below="@+id/pingping" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+
+        android:layout_marginTop="20dp"
+
+        android:layout_below="@+id/description">
+
+        <LinearLayout
+            android:id="@+id/input"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+
+            android:layout_marginBottom="25dp">
+
+            <EditText
+                android:id="@+id/addr"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="3"
+
+                android:inputType="text"
+                android:hint="IP : (7777)"
+                android:gravity="center" />
+
+            <Button
+                android:id="@+id/send"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_alignBaseline="@+id/addr"
+
+                android:layout_alignParentRight="true"
+                android:layout_weight="1"
+                android:background="#636e72"
+
+                android:text="Send"
+                android:textColor="#dfe6e9" />
+
+        </LinearLayout>
+
+    </RelativeLayout>
 
     <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:id="@+id/isConnected"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        android:visibility="invisible"
+
+        android:text="사.. 소.. 세.. (대충 연결하기 위한 주문)"
+        android:textSize="15dp"
+        android:textColor="#74b9ff"
+
+        android:gravity="center"
+
+        android:layout_below="@+id/input" />
+
+    <LinearLayout
+        android:id="@+id/btnGroup"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:orientation="horizontal"
+        android:layout_weight="2"
+
+        android:layout_marginTop="25dp"
+
+        android:layout_below="@+id/isConnected">
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Start" />
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Prev" />
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Next" />
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="End" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:orientation="horizontal"
+        android:layout_weight="0.7"
+
+        android:layout_marginTop="4dp"
+        android:background="#b2bec3"
+
+        android:padding="4dp"
+        android:gravity="bottom|right">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:text="made by "
+            android:textSize="20dp" />
+
+        <TextView
+            android:id="@+id/lapot"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:text="L.A POT."
+            android:textSize="30dp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+</LinearLayout>
