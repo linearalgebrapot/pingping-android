@@ -2,8 +2,11 @@ package com.example.pingping_android;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.view.View;
@@ -18,9 +21,11 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 
+import static splitties.toast.ToastKt.toast;
+
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    // VIew
+    // View
     EditText editText;
     Button sendBtn;
     TextView targetTextView;
@@ -55,27 +60,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Typeface typeface = Typeface.createFromAsset(getAssets(), "ttf_kimdo.ttf");
         lapotText.setTypeface(typeface);
 
-        /* initialize network setting */
-        /*
-        ConnectivityManager cm = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
-        // TODO: deprecated!
-        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-        if (activeNetwork != null) {
-            if (activeNetwork.getType() == ConnectivityManager.TYPE_WIFI) {
-                // ...
-            } else if (activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE) {
-                // ...
-            }
-        } else {
-            // can't connect to WiFi network
-        }
-        */
-
         targetTextView = (TextView)findViewById(R.id.isConnected);
 
         /* register Button Event */
         sendBtn = (Button)findViewById(R.id.send);
         sendBtn.setOnClickListener(this);
+
+        if(!isNetworkConnected(this))
+            toast("인터넷에 연결할 수 없습니다. 네트워크 상태를 확인해주세여.");
+    }
+
+    //인터넷 연결 여부 확인
+    public static boolean isNetworkConnected(Context context) {
+        ConnectivityManager manager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo mobile = manager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
+        NetworkInfo wifi = manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        NetworkInfo wimax = manager.getNetworkInfo(ConnectivityManager.TYPE_WIMAX);
+
+        boolean bwimax = false;
+
+        if (wimax != null)
+            bwimax = wimax.isConnected(); // wimax 상태 체크
+        if (mobile != null) return mobile.isConnected() || wifi.isConnected() || bwimax;
+        else return wifi.isConnected() || bwimax;
     }
 
     // Button Event callback function
@@ -91,7 +98,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         st.start();
 
         /* check, and inform to user if connected */
-        if (isConnected == true && !serverIp.trim().equals("")) {
+        if (isConnected && !serverIp.trim().equals("")) {
             targetTextView.setText(serverIp + "에 연결됐어요 핑핑!");
             targetTextView.setTextColor(Color.parseColor("#74b9ff"));
         } else if (serverIp.trim().equals("")) {
@@ -144,9 +151,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private void showToast(String message) {
+    //라이브러리 넣어둬서 이제 toast(하고싶은말)로 사용 가능
+    /*private void showToast(String message) {
         Toast toast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
         toast.show();
-    }
-
+    }*/
 }
