@@ -8,46 +8,45 @@ import android.graphics.Typeface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.os.SystemClock;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 
-import static splitties.toast.ToastKt.toast;
+import javax.net.ssl.HandshakeCompletedEvent;
+
+// import static splitties.toast.ToastKt.toast;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
+    /* Globals */
     // View
-    EditText editText;
-    Button sendBtn;
-    TextView targetTextView;
+    EditText    editText;
+    TextView    targetTextView;
+    TextView    lapotText;
+    Button      btnSend, btnStart, btnLeft, btnRight, btnEnd;
 
     // Socket
-    Socket socket;
-    BufferedInputStream bin;
-    BufferedOutputStream bout;
+    Socket                  socket;
+    BufferedOutputStream    bout;
 
     SocketThread st;
-    /*
-    ReadThread rt;
-    WriteThread wt;
-    */
-
-    //Handler writeHandler;
 
     // Connection info.
     String serverIp;
     int serverPort = 7777;
 
-    boolean flagConnection = true;
     boolean isConnected = false;
 
     @Override
@@ -55,19 +54,115 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        /* adjust custom font */
-        TextView lapotText = (TextView)findViewById(R.id.lapot);
+        editText = (EditText)findViewById(R.id.addr);
+        targetTextView = (TextView)findViewById(R.id.isConnected);
+        lapotText = (TextView)findViewById(R.id.lapot);
+
+        btnSend = (Button)findViewById(R.id.send);
+        btnStart = (Button)findViewById(R.id.start);
+        btnLeft = (Button)findViewById(R.id.left);
+        btnRight = (Button)findViewById(R.id.right);
+        btnEnd = (Button)findViewById(R.id.end);
+
         Typeface typeface = Typeface.createFromAsset(getAssets(), "ttf_kimdo.ttf");
         lapotText.setTypeface(typeface);
 
-        targetTextView = (TextView)findViewById(R.id.isConnected);
+        btnStart.setEnabled(false);
+        btnLeft.setEnabled(false);
+        btnRight.setEnabled(false);
+        btnEnd.setEnabled(false);
 
-        /* register Button Event */
-        sendBtn = (Button)findViewById(R.id.send);
-        sendBtn.setOnClickListener(this);
+        btnSend.setOnClickListener(this);
 
-        if(!isNetworkConnected(this))
-            toast("인터넷에 연결할 수 없습니다. 네트워크 상태를 확인해주세여.");
+        /* check whether WiFi, Mobile network is opened */
+        if (!isNetworkConnected(this)) {
+            Toast.makeText(getApplicationContext(), "인터넷에 연결할 수 없습니다. 네트워크 상태를 확인해주세여.", Toast.LENGTH_SHORT).show();
+        }
+
+        st = new SocketThread();
+    }
+
+
+    @Override
+    public void onClick(View v) {
+
+        serverIp = editText.getText().toString();
+        if (!serverIp.trim().equals("")) {
+            st.start();
+        } else { // else if (serverIp.trim().equals(""))
+            targetTextView.setText("암것도 입력안하셨거든여 ㅡㅡ;");
+            targetTextView.setTextColor(Color.parseColor("#ff7675"));
+        }
+        targetTextView.setVisibility(View.VISIBLE);
+    }
+
+
+    Handler uiHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            if (msg.what == 1) {
+                targetTextView.setText(serverIp + "에 연결됐어요 핑핑!");
+                targetTextView.setTextColor(Color.parseColor("#74b9ff"));
+
+                btnSend.setEnabled(false);
+                btnStart.setEnabled(true);
+                btnLeft.setEnabled(true);
+                btnRight.setEnabled(true);
+                btnEnd.setEnabled(true);
+
+                Toast.makeText(getApplicationContext(), "오로로로로롴", Toast.LENGTH_SHORT).show();
+            } else if (msg.what == 2) { /* may never be happened case */
+                targetTextView.setText(serverIp + "에 이미 연결되어있을걸요..? 핑핑!");
+                targetTextView.setTextColor(Color.parseColor("#74b9ff"));
+
+            } else if (msg.what == 3) {
+                targetTextView.setText(serverIp + "인데 다시 연결해봐여 핑핑...");
+                targetTextView.setTextColor(Color.parseColor("#ff7675"));
+            }
+        }
+    };
+
+
+    class SocketThread extends Thread {
+
+        @Override
+        public void run() {
+
+            Message msg = new Message();
+            try {
+                // create Socket and connect
+                if (!isConnected) {
+                    socket = new Socket();
+                    SocketAddress remoteAddr = new InetSocketAddress(serverIp, serverPort);
+                    socket.connect(remoteAddr, 10000);
+
+                    /*
+                    bout = new BufferedOutputStream(socket.getOutputStream());
+
+                    if (wt != null) {
+                        writeHandler.getLooper().quit();
+                    }
+
+                    wt = new WriteThread();
+                    wt.start();
+                     */
+
+                    isConnected = true;
+
+                    msg.what = 1;
+                    uiHandler.sendMessage(msg);
+
+                } else {
+                    msg.what = 2;
+                    uiHandler.sendMessage(msg);
+                }
+
+            } catch (Exception e) {
+                msg.what = 3;
+                uiHandler.sendMessage(msg);
+            }
+
+        }
     }
 
     //인터넷 연결 여부 확인
@@ -79,81 +174,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         boolean bwimax = false;
 
-        if (wimax != null)
+        if (wimax != null) {
             bwimax = wimax.isConnected(); // wimax 상태 체크
-        if (mobile != null) return mobile.isConnected() || wifi.isConnected() || bwimax;
-        else return wifi.isConnected() || bwimax;
-    }
-
-    // Button Event callback function
-    @Override
-    public void onClick(View v) {
-
-        /* Get ip addr as user input from EditText View */
-        editText = (EditText)findViewById(R.id.addr);
-        serverIp = editText.getText().toString();
-
-        /* networking... -> set inConnected value */
-        st = new SocketThread();
-        st.start();
-
-        /* check, and inform to user if connected */
-        if (isConnected && !serverIp.trim().equals("")) {
-            targetTextView.setText(serverIp + "에 연결됐어요 핑핑!");
-            targetTextView.setTextColor(Color.parseColor("#74b9ff"));
-        } else if (serverIp.trim().equals("")) {
-            targetTextView.setText("암것도 입력안하셨거든여 ㅡㅡ;");
-            targetTextView.setTextColor(Color.parseColor("#ff7675"));
+        }
+        if (mobile != null) {
+            return mobile.isConnected() || wifi.isConnected() || bwimax;
         } else {
-            targetTextView.setText(serverIp + "인데 다시 연결해봐여 핑핑...");
-            targetTextView.setTextColor(Color.parseColor("#ff7675"));
-        }
-        targetTextView.setVisibility(View.VISIBLE);
-
-    }
-
-    class SocketThread extends Thread {
-
-        public void run() {
-
-            while (flagConnection) {
-
-                try {
-                    if (!isConnected) {
-                        socket = new Socket();
-                        SocketAddress remoteAddr = new InetSocketAddress(serverIp, serverPort);
-                        socket.connect(remoteAddr, 5000);
-
-                        bout = new BufferedOutputStream(socket.getOutputStream());
-                        bin = new BufferedInputStream(socket.getInputStream());
-
-                        /*
-                        if (rt != null) {
-                            flagRead = false;
-                        }
-                        if (wt != null) {
-                            writeHandler.getLooper().quit();
-                        }
-                        wt =
-                         */
-
-                        isConnected = true;
-
-                    } else {
-                        SystemClock.sleep(5000);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    SystemClock.sleep(5000);
-                }
-
-            }
+            return wifi.isConnected() || bwimax;
         }
     }
 
-    //라이브러리 넣어둬서 이제 toast(하고싶은말)로 사용 가능
-    /*private void showToast(String message) {
-        Toast toast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
-        toast.show();
-    }*/
 }
