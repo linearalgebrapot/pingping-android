@@ -27,9 +27,6 @@ public class Server implements Runnable {
                 } catch (Exception e) {
                     System.out.println("SERVER: ERROR on Receiving");
                     e.printStackTrace();
-                } finally {
-                    client.close();
-                    System.out.println("SERVER: DONE");
                 }
             }
         } catch (Exception e) {
