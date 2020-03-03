@@ -9,9 +9,9 @@ public class Server implements Runnable {
     @Override
     public void run() {
         try {
+            // ServerSocket over WiFi network (ex. 192.168.35.xxx:7777)
             System.out.println("SERVER: Connectiong...");
             ServerSocket serverSocket = new ServerSocket(ServerPort);
-            System.out.println("[ " + serverSocket.getInetAddress() + " ] server socket starting!");
 
             while (true) {
                 // client 접속 대기
