@@ -23,6 +23,7 @@ import android.widget.Toast;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
@@ -53,6 +54,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     // AsyncTask
     SocketAsyncTask sat;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -133,9 +136,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             try {
                 // connect to socket at port 7777
-                socket = new Socket(serverIp, serverPort);
-                SocketAddress remoteAddr = new InetSocketAddress(serverIp, serverPort);
-                socket.connect(remoteAddr, 10000);
+                InetAddress serverAddr = InetAddress.getByName(serverIp);
+                socket = new Socket(serverAddr, serverPort);
+
                 /*
                 // set the output stream
                 printWriter = new PrintWriter(socket.getOutputStream());
