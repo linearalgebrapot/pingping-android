@@ -42,36 +42,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     TextView    lapotText;
     Button      btnSend, btnStart, btnLeft, btnRight, btnEnd;
 
-    // Socket
-    private static Socket socket;
-    private static PrintWriter printWriter;
-    String command = "";
-
-    // Connection info.
-    private static String serverIp;
-    int serverPort = 7777;
-
-    boolean isConnected = false;
-
-    // AsyncTask for socket connection
-    SocketAsyncTask sat;
-
+    // Connection Info
+    static Socket socket;
+    static int serverPort = 7777;
+    static boolean isConnected = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        editText = (EditText)findViewById(R.id.addr);
-        targetTextView = (TextView)findViewById(R.id.isConnected);
-        lapotText = (TextView)findViewById(R.id.lapot);
+        //View Binding
+        editText = findViewById(R.id.addr);
+        targetTextView = findViewById(R.id.isConnected);
+        lapotText = findViewById(R.id.lapot);
 
-        btnSend = (Button)findViewById(R.id.send);
-        btnStart = (Button)findViewById(R.id.start);
-        btnLeft = (Button)findViewById(R.id.left);
-        btnRight = (Button)findViewById(R.id.right);
-        btnEnd = (Button)findViewById(R.id.end);
+        btnSend = findViewById(R.id.send);
+        btnStart = findViewById(R.id.start);
+        btnLeft = findViewById(R.id.left);
+        btnRight = findViewById(R.id.right);
+        btnEnd = findViewById(R.id.end);
 
+        //Font
         Typeface typeface = Typeface.createFromAsset(getAssets(), "ttf_kimdo.ttf");
         lapotText.setTypeface(typeface);
 
@@ -87,24 +79,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnEnd.setOnClickListener(this);
 
         /* check whether WiFi, Mobile network is opened */
-        if (!isNetworkConnected(this)) {
+        if (!isNetworkConnected(this))
             Toast.makeText(getApplicationContext(), "인터넷에 연결할 수 없습니다. 네트워크 상태를 확인해주세여.", Toast.LENGTH_SHORT).show();
-        }
-
-        sat = new SocketAsyncTask();
     }
-
 
     @Override
     public void onClick(View v) {
+        String command;
 
         if (v.getId() == R.id.send) {
-            Log.d("DEBUG", "onClick: btnSend");
-            serverIp = editText.getText().toString();
+            //Log.d("DEBUG", "onClick: btnSend");
+            String serverIp = editText.getText().toString();
 
             if (!serverIp.trim().equals("")) {
-                sat.execute();
-            } else { // else if (serverIp.trim().equals(""))
+                new SocketAsyncTask(serverIp).execute();
+            } else {
                 targetTextView.setText("암것도 입력안하셨거든여 ㅡㅡ;");
                 targetTextView.setTextColor(Color.parseColor("#ff7675"));
             }
@@ -114,18 +103,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Button b = (Button)v;
             command = b.getText().toString().toLowerCase();
 
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        // set output stream
-                        printWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
-                        // send command
-                        // TODO: what is diff. between write(command), flush(), close()
-                        printWriter.println(command);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+            Log.d("command", command);
+
+            new Thread(() -> {
+                try {
+                    // set output stream
+                    PrintWriter printWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
+                    // send command
+                    // TODO: what is diff. between write(command), flush(), close()
+                    //printWriter.println("test");
+                    printWriter.write(command);
+                    printWriter.flush();
+                    printWriter.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }).start();
         }
@@ -133,8 +124,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
     class SocketAsyncTask extends AsyncTask<String, Integer, Void>{
+        String ip;
 
-        private int what;
+        SocketAsyncTask(String ip){
+            this.ip = ip;
+        }
 
         @Override
         protected void onPreExecute() {
@@ -148,7 +142,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (!isConnected) {
                 try {
                     // connect to socket at port 7777
-                    InetAddress serverAddr = InetAddress.getByName(serverIp);
+                    InetAddress serverAddr = InetAddress.getByName(ip);
                     socket = new Socket(serverAddr, serverPort);
 
                     publishProgress(1);
@@ -175,11 +169,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 btnRight.setEnabled(true);
                 btnEnd.setEnabled(true);
 
-                targetTextView.setText(serverIp + "에 연결됐어요 핑핑!");
+                targetTextView.setText(ip + "에 연결됐어요 핑핑!");
                 targetTextView.setTypeface(null, Typeface.BOLD);
                 targetTextView.setTextColor(Color.parseColor("#74b9ff"));
             } else if (values[0] == 2) {
-                targetTextView.setText(serverIp + "인데 다시 연결해봐여 핑핑...");
+                targetTextView.setText(ip + "인데 다시 연결해봐여 핑핑...");
                 targetTextView.setTextColor(Color.parseColor("#ff7675"));
             }
         }
