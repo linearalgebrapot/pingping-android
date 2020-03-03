@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -20,6 +21,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
@@ -38,16 +41,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Button      btnSend, btnStart, btnLeft, btnRight, btnEnd;
 
     // Socket
-    Socket                  socket;
-    BufferedOutputStream    bout;
-
-    SocketThread st;
+    private static Socket socket;
+    private static PrintWriter printWriter;
+    String command = "";
 
     // Connection info.
-    String serverIp;
+    private static String serverIp;
     int serverPort = 7777;
 
     boolean isConnected = false;
+
+    // AsyncTask
+    SocketAsyncTask sat;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,96 +78,109 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnEnd.setEnabled(false);
 
         btnSend.setOnClickListener(this);
+        btnStart.setOnClickListener(this);
+        btnLeft.setOnClickListener(this);
+        btnRight.setOnClickListener(this);
+        btnEnd.setOnClickListener(this);
 
         /* check whether WiFi, Mobile network is opened */
         if (!isNetworkConnected(this)) {
             Toast.makeText(getApplicationContext(), "인터넷에 연결할 수 없습니다. 네트워크 상태를 확인해주세여.", Toast.LENGTH_SHORT).show();
         }
 
-        st = new SocketThread();
+        sat = new SocketAsyncTask();
     }
 
 
     @Override
     public void onClick(View v) {
 
-        serverIp = editText.getText().toString();
-        if (!serverIp.trim().equals("")) {
-            st.start();
-        } else { // else if (serverIp.trim().equals(""))
-            targetTextView.setText("암것도 입력안하셨거든여 ㅡㅡ;");
-            targetTextView.setTextColor(Color.parseColor("#ff7675"));
+        if (v.getId() == R.id.send) {
+            Log.d("DEBUG", "onClick: btnSend");
+            serverIp = editText.getText().toString();
+
+            if (!serverIp.trim().equals("")) {
+                sat.execute();
+            } else { // else if (serverIp.trim().equals(""))
+                targetTextView.setText("암것도 입력안하셨거든여 ㅡㅡ;");
+                targetTextView.setTextColor(Color.parseColor("#ff7675"));
+            }
+            targetTextView.setVisibility(View.VISIBLE);
+
+        } else {
+            Button b = (Button)v;
+            send_command(v, b.getText().toString());
         }
-        targetTextView.setVisibility(View.VISIBLE);
     }
 
+    public void send_command(View v, String cmd) {
 
-    Handler uiHandler = new Handler() {
+        command = cmd;
+        Toast.makeText(getApplicationContext(), "Data sent: " + command, Toast.LENGTH_LONG).show();
+    }
+
+    class SocketAsyncTask extends AsyncTask<Void, Integer, Void>{
+
+        private int what;
+
         @Override
-        public void handleMessage(Message msg) {
-            if (msg.what == 1) {
-                targetTextView.setText(serverIp + "에 연결됐어요 핑핑!");
-                targetTextView.setTextColor(Color.parseColor("#74b9ff"));
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
 
+        @Override
+        protected Void doInBackground(Void... voids) {
+
+            try {
+                // connect to socket at port 7777
+                socket = new Socket(serverIp, serverPort);
+                SocketAddress remoteAddr = new InetSocketAddress(serverIp, serverPort);
+                socket.connect(remoteAddr, 10000);
+                /*
+                // set the output stream
+                printWriter = new PrintWriter(socket.getOutputStream());
+                // send command through socket
+                printWriter.write(command);
+                printWriter.flush();
+                printWriter.close();
+                */
+                // socket.close();
+                what = 1;
+                publishProgress(what);
+
+            } catch (IOException e) {
+                what = 2;
+                e.printStackTrace();
+                publishProgress(what);
+            }
+            return null;
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            Log.d("DEBUG", "onProgressUpdate(" + values[0] + ")");
+
+            if (values[0] == 1) {
                 btnSend.setEnabled(false);
                 btnStart.setEnabled(true);
                 btnLeft.setEnabled(true);
                 btnRight.setEnabled(true);
                 btnEnd.setEnabled(true);
 
-                Toast.makeText(getApplicationContext(), "오로로로로롴", Toast.LENGTH_SHORT).show();
-            } else if (msg.what == 2) { /* may never be happened case */
-                targetTextView.setText(serverIp + "에 이미 연결되어있을걸요..? 핑핑!");
+                targetTextView.setText(serverIp + "에 연결됐어요 핑핑!");
                 targetTextView.setTextColor(Color.parseColor("#74b9ff"));
-
-            } else if (msg.what == 3) {
+            } else if (values[0] == 2) {
                 targetTextView.setText(serverIp + "인데 다시 연결해봐여 핑핑...");
                 targetTextView.setTextColor(Color.parseColor("#ff7675"));
             }
         }
-    };
-
-
-    class SocketThread extends Thread {
 
         @Override
-        public void run() {
-
-            Message msg = new Message();
-            try {
-                // create Socket and connect
-                if (!isConnected) {
-                    socket = new Socket();
-                    SocketAddress remoteAddr = new InetSocketAddress(serverIp, serverPort);
-                    socket.connect(remoteAddr, 10000);
-
-                    /*
-                    bout = new BufferedOutputStream(socket.getOutputStream());
-
-                    if (wt != null) {
-                        writeHandler.getLooper().quit();
-                    }
-
-                    wt = new WriteThread();
-                    wt.start();
-                     */
-
-                    isConnected = true;
-
-                    msg.what = 1;
-                    uiHandler.sendMessage(msg);
-
-                } else {
-                    msg.what = 2;
-                    uiHandler.sendMessage(msg);
-                }
-
-            } catch (Exception e) {
-                msg.what = 3;
-                uiHandler.sendMessage(msg);
-            }
-
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
         }
+
+
     }
 
     //인터넷 연결 여부 확인
