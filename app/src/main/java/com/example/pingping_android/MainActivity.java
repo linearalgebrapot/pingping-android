@@ -21,16 +21,17 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.lang.reflect.Type;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 
 import javax.net.ssl.HandshakeCompletedEvent;
-
-// import static splitties.toast.ToastKt.toast;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -52,9 +53,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     boolean isConnected = false;
 
-    // AsyncTask
+    // AsyncTask for socket connection
     SocketAsyncTask sat;
-
 
 
     @Override
@@ -112,17 +112,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         } else {
             Button b = (Button)v;
-            send_command(v, b.getText().toString());
+            command = b.getText().toString().toLowerCase();
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        // set output stream
+                        printWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
+                        // send command
+                        // TODO: what is diff. between write(command), flush(), close()
+                        printWriter.println(command);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
         }
     }
 
-    public void send_command(View v, String cmd) {
 
-        command = cmd;
-        Toast.makeText(getApplicationContext(), "Data sent: " + command, Toast.LENGTH_LONG).show();
-    }
-
-    class SocketAsyncTask extends AsyncTask<Void, Integer, Void>{
+    class SocketAsyncTask extends AsyncTask<String, Integer, Void>{
 
         private int what;
 
@@ -132,30 +142,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         @Override
-        protected Void doInBackground(Void... voids) {
+        protected Void doInBackground(String... strings) {
 
-            try {
-                // connect to socket at port 7777
-                InetAddress serverAddr = InetAddress.getByName(serverIp);
-                socket = new Socket(serverAddr, serverPort);
+            // Socket Connection.
+            if (!isConnected) {
+                try {
+                    // connect to socket at port 7777
+                    InetAddress serverAddr = InetAddress.getByName(serverIp);
+                    socket = new Socket(serverAddr, serverPort);
 
-                /*
-                // set the output stream
-                printWriter = new PrintWriter(socket.getOutputStream());
-                // send command through socket
-                printWriter.write(command);
-                printWriter.flush();
-                printWriter.close();
-                */
-                // socket.close();
-                what = 1;
-                publishProgress(what);
+                    publishProgress(1);
+                    isConnected = true;
+                    // socket.close();
 
-            } catch (IOException e) {
-                what = 2;
-                e.printStackTrace();
-                publishProgress(what);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    publishProgress(2);
+                }
             }
+
             return null;
         }
 
@@ -171,6 +176,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 btnEnd.setEnabled(true);
 
                 targetTextView.setText(serverIp + "에 연결됐어요 핑핑!");
+                targetTextView.setTypeface(null, Typeface.BOLD);
                 targetTextView.setTextColor(Color.parseColor("#74b9ff"));
             } else if (values[0] == 2) {
                 targetTextView.setText(serverIp + "인데 다시 연결해봐여 핑핑...");
@@ -182,7 +188,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
         }
-
 
     }
 
