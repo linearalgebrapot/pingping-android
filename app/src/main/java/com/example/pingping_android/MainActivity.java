@@ -1,37 +1,17 @@
 package com.example.pingping_android;
 
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
-import android.os.SystemClock;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.lang.reflect.Type;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketAddress;
-
-import javax.net.ssl.HandshakeCompletedEvent;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -42,10 +22,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     TextView    lapotText;
     Button      btnSend, btnStart, btnLeft, btnRight, btnEnd;
 
+    SocketTask socketTask;
+
     // Connection Info
-    static Socket socket;
-    static int serverPort = 7777;
-    static boolean isConnected = false;
+    //static Socket socket;
+    //static int serverPort = 7777;
+    //static boolean isConnected = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +44,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnLeft = findViewById(R.id.left);
         btnRight = findViewById(R.id.right);
         btnEnd = findViewById(R.id.end);
+
+        socketTask = new SocketTask();
 
         //Font
         Typeface typeface = Typeface.createFromAsset(getAssets(), "ttf_kimdo.ttf");
@@ -92,7 +76,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             String serverIp = editText.getText().toString();
 
             if (!serverIp.trim().equals("")) {
-                new SocketAsyncTask(serverIp).execute();
+                socketTask.connect(serverIp, this);
+                // new SocketAsyncTask(serverIp).execute();
             } else {
                 targetTextView.setText("암것도 입력안하셨거든여 ㅡㅡ;");
                 targetTextView.setTextColor(Color.parseColor("#ff7675"));
@@ -103,14 +88,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Button b = (Button)v;
             command = b.getText().toString().toLowerCase();
 
-            Log.d("command", command);
+            socketTask.sendMsg(command);
 
-            new Thread(() -> {
+            /*new Thread(() -> {
                 try {
                     // set output stream
                     PrintWriter printWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
                     // send command
-                    // TODO: what is diff. between write(command), flush(), close()
                     //printWriter.println("test");
                     printWriter.write(command);
                     printWriter.flush();
@@ -118,12 +102,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-            }).start();
+            }).start();*/
+        }
+    }
+
+    public void update(boolean b, String ip) {
+        if (b) {
+            btnSend.setEnabled(false);
+            btnStart.setEnabled(true);
+            btnLeft.setEnabled(true);
+            btnRight.setEnabled(true);
+            btnEnd.setEnabled(true);
+
+            targetTextView.setText(ip + "에 연결됐어요 핑핑!");
+            targetTextView.setTypeface(null, Typeface.BOLD);
+            targetTextView.setTextColor(Color.parseColor("#74b9ff"));
+        } else {
+            targetTextView.setText(ip + "인데 다시 연결해봐여 핑핑...");
+            targetTextView.setTextColor(Color.parseColor("#ff7675"));
         }
     }
 
 
-    class SocketAsyncTask extends AsyncTask<String, Integer, Void>{
+   /* class SocketAsyncTask extends AsyncTask<String, Integer, Void>{
         String ip;
 
         SocketAsyncTask(String ip){
@@ -183,7 +184,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             super.onPostExecute(aVoid);
         }
 
-    }
+    }*/
 
     //인터넷 연결 여부 확인
     public static boolean isNetworkConnected(Context context) {
@@ -203,5 +204,4 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return wifi.isConnected() || bwimax;
         }
     }
-
 }
