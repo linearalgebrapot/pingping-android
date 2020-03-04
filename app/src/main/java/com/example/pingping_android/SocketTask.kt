@@ -4,9 +4,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import splitties.toast.toast
 import java.io.*
 import java.net.InetAddress
 import java.net.Socket
+import java.net.SocketException
 
 class SocketTask{
     lateinit var socket: Socket
@@ -35,9 +37,18 @@ class SocketTask{
             if(socket.isClosed)
                 socket = Socket(address, 7777)
 
-            PrintWriter(BufferedWriter(OutputStreamWriter(socket.getOutputStream()) as Writer), true).use {
-                it.write(cmd)
+            try{
+                send(cmd, socket)
+            }catch (e: SocketException){
+                send(cmd, Socket(address, 7777))
             }
+
+        }
+    }
+
+    private fun send(cmd: String, socket: Socket) {
+        PrintWriter(BufferedWriter(OutputStreamWriter(socket.getOutputStream()) as Writer), true).use {
+            it.write(cmd)
         }
     }
 }
