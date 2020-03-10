@@ -29,6 +29,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     //static int serverPort = 7777;
     //static boolean isConnected = false;
 
+    // BackPressHandler 객체 선언, 할당
+    private BackPressHandler backPressHandler = new BackPressHandler(this);
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -104,6 +107,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
             }).start();*/
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        backPressHandler.onBackPressed("\'뒤로\' 버튼을 한번 더 누르시면 종료됩니다.", 2000);
     }
 
     public void update(boolean b, String ip) {
