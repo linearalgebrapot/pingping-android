@@ -40,4 +40,23 @@ public class BackPressHandler {
             activity.finish();
         }
     }
+
+    /**
+     * Splash 화면 종료 방지, default 스펙 설정
+     * @param isSplash
+     */
+    public void onBackPressed(String isSplash) {
+        if (isSplash == "SPLASH") {
+            // do nothing.
+        } else {
+            if (System.currentTimeMillis() > backKeyPressedTime + 2000) {
+                backKeyPressedTime = System.currentTimeMillis();
+                Toast.makeText(activity, "\'뒤로\' 버튼을 한번 더 누르시면 종료됩니다.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (System.currentTimeMillis() <= backKeyPressedTime + 2000) {
+                activity.finish();
+            }
+        }
+    }
 }
