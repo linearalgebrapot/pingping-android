@@ -1,4 +1,4 @@
-package com.example.pingping_android;
+package dev.sosasosa.pingping;
 
 import android.content.Context;
 
@@ -22,6 +22,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
-        assertEquals("com.example.pingping_android", appContext.getPackageName());
+        assertEquals("com.example.dev.sosasosa.pingping", appContext.getPackageName());
     }
 }

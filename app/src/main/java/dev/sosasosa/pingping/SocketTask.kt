@@ -1,10 +1,9 @@
-package com.example.pingping_android
+package dev.sosasosa.pingping
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import splitties.toast.toast
 import java.io.*
 import java.net.InetAddress
 import java.net.Socket

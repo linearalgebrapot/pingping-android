@@ -1,4 +1,4 @@
-package com.example.pingping_android;
+package dev.sosasosa.pingping;
 
 import androidx.appcompat.app.AppCompatActivity;
 

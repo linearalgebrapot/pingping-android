@@ -1,4 +1,4 @@
-package com.example.pingping_android;
+package dev.sosasosa.pingping;
 
 import androidx.appcompat.app.AppCompatActivity;
 import android.content.Context;
@@ -12,6 +12,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import dev.sosasosa.pingping.R;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 

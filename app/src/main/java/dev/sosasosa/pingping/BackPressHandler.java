@@ -1,7 +1,6 @@
-package com.example.pingping_android;
+package dev.sosasosa.pingping;
 
 import android.app.Activity;
-import android.os.SystemClock;
 import android.widget.Toast;
 
 /**
